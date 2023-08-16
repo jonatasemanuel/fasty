@@ -1,16 +1,12 @@
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from security import OAuth2PasswordRequestForm
-from security import get_password_hash
+
 from database import get_session
 from models import User
 from schemas import Message, Token, UserList, UserPublic, UserSchema
-from security import (
-    create_access_token,
-    get_password_hash,
-    verify_password,
-)
+from security import create_access_token, get_password_hash, verify_password
 
 app = FastAPI()
 
@@ -36,9 +32,7 @@ def create_user(user: UserSchema, session: Session = Depends(get_session)):
     hashed_password = get_password_hash(user.password)
 
     db_user = User(
-        username=user.username,
-        password=hashed_password,
-        email=user.email
+        username=user.username, password=hashed_password, email=user.email
     )
     session.add(db_user)
     session.commit()

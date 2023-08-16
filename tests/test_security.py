@@ -1,6 +1,6 @@
 from jose import jwt
 
-from security import create_access_token, SECRET_KEY
+from security import SECRET_KEY, create_access_token
 
 
 def test_jwt():

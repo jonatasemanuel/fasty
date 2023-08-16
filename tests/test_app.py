@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
-from schemas import UserPublic
 
 from app import app
+from schemas import UserPublic
 
 client = TestClient(app)
 
@@ -14,7 +14,7 @@ def test_root_deve_retornar_200_ola_mundo():
 
 def test_create_user(client):
     response = client.post(
-        '/users/',
+        '/users/1',
         json={
             'username': 'alice',
             'email': 'alice@example.com',
@@ -62,3 +62,15 @@ def test_delete_user(client, user):
     response = client.delete('/users/1')
     assert response.status_code == 200
     assert response.json() == {'detail': 'User deleted'}
+
+
+def test_get_token(client, user):
+    response = client.post(
+        '/token',
+        data={'username': user.email, 'password': user.clean_password},
+    )
+    token = response.json()
+
+    assert response.status_code == 200
+    assert 'access_token' in token
+    assert 'token_type' in token
