@@ -3,10 +3,11 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-from security import get_password_hash
+
 from app import app
 from database import get_session
 from models import Base, User
+from security import get_password_hash
 
 
 @pytest.fixture
@@ -46,3 +47,12 @@ def user(session):
     user.clean_password = 'testtest'
 
     return user
+
+
+@pytest.fixture
+def token(client, user):
+    response = client.post(
+        '/token',
+        data={'username': user.email, 'password': user.clean_passoword},
+    )
+    return response.json()['access_token']
