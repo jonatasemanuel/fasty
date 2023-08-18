@@ -36,7 +36,7 @@ def create_user(user: UserSchema, session: Session):
 
 
 @router.get('/', response_model=UserList)
-def read_users(skip: int = 0, limit: int = 100, session: Session):
+def read_users(session: Session, skip: int = 0, limit: int = 100):
     users = session.scalars(select(User).offset(skip).limit(limit)).all()
     return {'users': users}
 
