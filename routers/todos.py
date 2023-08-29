@@ -1,11 +1,18 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from database import get_session
 from models import Todo, User
-from schemas import TodoPublic, TodoSchema
+from schemas import (
+    ListTodos,
+    Message,
+    TodoPublic,
+    TodoSchema,
+    TodoUpdate,
+)
 from security import get_current_user
 
 
@@ -33,3 +40,65 @@ def create_todo(
     session.refresh(db_todo)
 
     return db_todo
+
+
+@router.get('/', response_model=ListTodos)
+def list_todos(
+    session: Session,
+    user: CurrentUser,
+    title: str = Query(None),
+    description: str = Query(None),
+    state: str = Query(None),
+    offset: int = Query(None),
+    limit: int = Query(None),
+):
+    query = select(Todo).where(Todo.user_id == user.id)
+
+    if title:
+        query = query.filter(Todo.title.contains(title))
+
+    if description:
+        query = query.filter(Todo.decription.contains(description))
+
+    if state:
+        query = query.filter(Todo.state == state)
+
+    todos = session.scalars(query.offset(offset).limit(limit)).all()
+
+    return {'todos': todos}
+
+
+@router.patch('/{todo_id}', response_model=TodoPublic)
+def patch_todo(
+    todo_id: int, session: Session, user: CurrentUser, todo: TodoUpdate
+):
+    db_todo = session.scalar(
+        select(Todo).where(Todo.user_id == user.id, Todo.id == todo_id)
+    )
+
+    if not db_todo:
+        raise HTTPException(status_code=404, detail='Task not found.')
+
+    for key, value in todo.model_dump(exclude_unset=True).items():
+        setattr(db_todo, key, value)
+
+    session.add(db_todo)
+    session.commit()
+    session.refresh(db_todo)
+
+    return db_todo
+
+
+@router.delete('/{todo_id}', response_model=Message)
+def delete_todo(todo_id: int, session: Session, user: CurrentUser):
+    todo = session.scalar(
+        select(Todo).where(Todo.user_id == user.id, Todo.id == todo_id)
+    )
+
+    if not todo:
+        raise HTTPException(status_code=404, detail='Task not found.')
+
+    session.delete(todo)
+    session.commit()
+
+    return {'detail': 'Task has been deleted seccessfully.'}
