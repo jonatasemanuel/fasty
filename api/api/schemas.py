@@ -1,5 +1,6 @@
 from pydantic import BaseModel, ConfigDict, EmailStr
-from models import TodoState
+
+from api.models import TodoState
 
 
 class UserSchema(BaseModel):
@@ -9,6 +10,7 @@ class UserSchema(BaseModel):
 
 
 class UserPublic(BaseModel):
+    id: int
     username: str
     email: EmailStr
     model_config = ConfigDict(from_attributes=True)
@@ -41,14 +43,11 @@ class TodoSchema(BaseModel):
     state: TodoState
 
 
-class TodoPublic(BaseModel):
+class TodoPublic(TodoSchema):
     id: int
-    title: str
-    description: str
-    state: TodoState
 
 
-class ListTodos(BaseModel):
+class TodoList(BaseModel):
     todos: list[TodoPublic]
 
 

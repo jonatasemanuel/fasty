@@ -1,11 +1,11 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from models import User, Todo
+from api.models import Todo, User
 
 
 def test_create_user(session):
-    new_user = User(username='alice', password='secret', email='teste@test')
+    new_user = User(username='alice', password='secret', email='test@test')
     session.add(new_user)
     session.commit()
 

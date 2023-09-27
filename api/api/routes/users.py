@@ -4,10 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from database import get_session
-from models import User
-from schemas import Message, UserList, UserPublic, UserSchema
-from security import get_current_user, get_password_hash
+from api.database import get_session
+from api.models import User
+from api.schemas import Message, UserList, UserPublic, UserSchema
+from api.security import get_current_user, get_password_hash
 
 router = APIRouter(prefix='/users', tags=['users'])
 Session = Annotated[Session, Depends(get_session)]
@@ -16,7 +16,9 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 @router.post('/', response_model=UserPublic, status_code=201)
 def create_user(user: UserSchema, session: Session):
-    db_user = session.scalar(select(User).where(User.email == user.email))
+    db_user = session.scalar(
+        select(User).where(User.username == user.username)
+    )
 
     if db_user:
         raise HTTPException(
@@ -25,14 +27,14 @@ def create_user(user: UserSchema, session: Session):
 
     hashed_password = get_password_hash(user.password)
 
-    current_user = User(
+    db_user = User(
         username=user.username, password=hashed_password, email=user.email
     )
-    session.add(current_user)
+    session.add(db_user)
     session.commit()
-    session.refresh(current_user)
+    session.refresh(db_user)
 
-    return current_user
+    return db_user
 
 
 @router.get('/', response_model=UserList)
@@ -48,7 +50,6 @@ def update_user(
     session: Session,
     current_user: CurrentUser,
 ):
-
     if current_user.id != user_id:
         raise HTTPException(status_code=400, detail='Not enough permissions')
 
@@ -69,5 +70,4 @@ def delete_user(user_id: int, session: Session, current_user: CurrentUser):
 
     session.delete(current_user)
     session.commit()
-
     return {'detail': 'User deleted'}

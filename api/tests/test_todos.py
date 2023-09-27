@@ -1,10 +1,9 @@
+import factory.fuzzy
 
-from tests.factories import TodoFactory
-
-from models import Todo, TodoState, User
+from api.models import Todo, TodoState
 
 
-def test_create(client, token):
+def test_create_todo(client, token):
     response = client.post(
         '/todos/',
         headers={'Authorization': f'Bearer {token}'},
@@ -72,8 +71,7 @@ def test_list_todos_filter_title(session, user, client, token):
 
 def test_list_todos_filter_description(session, user, client, token):
     session.bulk_save_objects(
-        TodoFactory.create_batch(
-            5, user_id=user.id, description='description')
+        TodoFactory.create_batch(5, user_id=user.id, description='description')
     )
     session.commit()
 
@@ -115,7 +113,7 @@ def test_list_todos_filter_combined(session, user, client, token):
             3,
             user_id=user.id,
             title='Other title',
-            description='Other description',
+            description='other description',
             state=TodoState.todo,
         )
     )
@@ -127,3 +125,51 @@ def test_list_todos_filter_combined(session, user, client, token):
     )
 
     assert len(response.json()['todos']) == 5
+
+
+def test_patch_todo_error(client, token):
+    response = client.patch(
+        '/todos/10',
+        json={},
+        headers={'Authorization': f'Bearer {token}'},
+    )
+    assert response.status_code == 404
+    assert response.json() == {'detail': 'Task not found.'}
+
+
+def test_patch_todo(session, client, user, token):
+    todo = TodoFactory(user_id=user.id)
+
+    session.add(todo)
+    session.commit()
+
+    response = client.patch(
+        f'/todos/{todo.id}',
+        json={'title': 'teste!'},
+        headers={'Authorization': f'Bearer {token}'},
+    )
+    assert response.status_code == 200
+    assert response.json()['title'] == 'teste!'
+
+
+def test_delete_todo(session, client, user, token):
+    todo = TodoFactory(id=1, user_id=user.id)
+
+    session.add(todo)
+    session.commit()
+
+    response = client.delete(
+        f'/todos/{todo.id}', headers={'Authorization': f'Bearer {token}'}
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {'detail': 'Task has been deleted successfully.'}
+
+
+def test_delete_todo_error(client, token):
+    response = client.delete(
+        f'/todos/{10}', headers={'Authorization': f'Bearer {token}'}
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {'detail': 'Task not found.'}

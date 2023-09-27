@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from routers import auth, users, todos
+from api.routes import auth, todos, users
 
 app = FastAPI()
 
@@ -11,4 +11,4 @@ app.include_router(todos.router)
 
 @app.get('/')
 def read_root():
-    return {'message': 'Olá Mundo!'}
+    return {'message': 'Hello, world!'}

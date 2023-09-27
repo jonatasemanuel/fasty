@@ -1,9 +1,4 @@
-from fastapi.testclient import TestClient
-
-from app import app
-from schemas import UserPublic
-
-client = TestClient(app)
+from api.schemas import UserPublic
 
 
 def test_create_user(client):
@@ -15,16 +10,17 @@ def test_create_user(client):
             'password': 'secret',
         },
     )
+
     assert response.status_code == 201
     assert response.json() == {
         'username': 'alice',
         'email': 'alice@example.com',
-        # 'id': 1,
+        'id': 1,
     }
 
 
 def test_read_users(client):
-    response = client.get('/users')
+    response = client.get('/users/')
     assert response.status_code == 200
     assert response.json() == {'users': []}
 
@@ -49,7 +45,7 @@ def test_update_user(client, user, token):
     assert response.json() == {
         'username': 'bob',
         'email': 'bob@example.com',
-        'id': 1,
+        'id': user.id,
     }
 
 
@@ -58,17 +54,9 @@ def test_delete_user(client, user, token):
         f'/users/{user.id}',
         headers={'Authorization': f'Bearer {token}'},
     )
+
     assert response.status_code == 200
     assert response.json() == {'detail': 'User deleted'}
-
-
-def test_delete_user_wrong_user(client, other_user, token):
-    response = client.delete(
-        f'/users/{other_user.id}',
-        headers={'Authorization': f'Bearer {token}'},
-    )
-    assert response.status_code == 400
-    assert response.json() == {'detail': 'Not enough permissions'}
 
 
 def test_update_user_with_wrong_user(client, other_user, token):
@@ -82,4 +70,13 @@ def test_update_user_with_wrong_user(client, other_user, token):
         },
     )
     assert response.status_code == 400
-    assert response.json() == {'datail': 'Not enough permissions'}
+    assert response.json() == {'detail': 'Not enough permissions'}
+
+
+def test_delete_user_wrong_user(client, other_user, token):
+    response = client.delete(
+        f'/users/{other_user.id}',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+    assert response.status_code == 400
+    assert response.json() == {'detail': 'Not enough permissions'}

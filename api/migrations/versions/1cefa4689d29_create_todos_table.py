@@ -1,19 +1,21 @@
-"""create ttodos table
+"""create todos table
 
-Revision ID: 504d6fab3fc3
-Revises: a58642365ee0
-Create Date: 2023-08-26 01:34:53.849369
+Revision ID: 1cefa4689d29
+Revises: 41cb5633352d
+Create Date: 2023-09-22 00:56:06.401580
 
 """
+from typing import Sequence, Union
+
 from alembic import op
 import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '504d6fab3fc3'
-down_revision = 'a58642365ee0'
-branch_labels = None
-depends_on = None
+revision: str = '1cefa4689d29'
+down_revision: Union[str, None] = '41cb5633352d'
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:

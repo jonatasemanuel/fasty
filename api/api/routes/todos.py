@@ -4,31 +4,20 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from database import get_session
-from models import Todo, User
-from schemas import (
-    ListTodos,
-    Message,
-    TodoPublic,
-    TodoSchema,
-    TodoUpdate,
-)
-from security import get_current_user
+from api.database import get_session
+from api.models import Todo, User
+from api.schemas import Message, TodoList, TodoPublic, TodoSchema, TodoUpdate
+from api.security import get_current_user
 
-
-router = APIRouter()
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+Session = Annotated[Session, Depends(get_session)]
 
 router = APIRouter(prefix='/todos', tags=['todos'])
 
 
 @router.post('/', response_model=TodoPublic)
-def create_todo(
-    todo: TodoSchema,
-    user: CurrentUser,
-    session: Session = Depends(get_session),
-):
+def create_todo(todo: TodoSchema, user: CurrentUser, session: Session):
     db_todo: Todo = Todo(
         title=todo.title,
         description=todo.description,
@@ -42,7 +31,7 @@ def create_todo(
     return db_todo
 
 
-@router.get('/', response_model=ListTodos)
+@router.get('/', response_model=TodoList)
 def list_todos(
     session: Session,
     user: CurrentUser,
@@ -58,7 +47,7 @@ def list_todos(
         query = query.filter(Todo.title.contains(title))
 
     if description:
-        query = query.filter(Todo.decription.contains(description))
+        query = query.filter(Todo.description.contains(description))
 
     if state:
         query = query.filter(Todo.state == state)
@@ -75,7 +64,6 @@ def patch_todo(
     db_todo = session.scalar(
         select(Todo).where(Todo.user_id == user.id, Todo.id == todo_id)
     )
-
     if not db_todo:
         raise HTTPException(status_code=404, detail='Task not found.')
 
@@ -101,4 +89,4 @@ def delete_todo(todo_id: int, session: Session, user: CurrentUser):
     session.delete(todo)
     session.commit()
 
-    return {'detail': 'Task has been deleted seccessfully.'}
+    return {'detail': 'Task has been deleted successfully.'}

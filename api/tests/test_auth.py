@@ -1,9 +1,4 @@
-from fastapi.testclient import TestClient
 from freezegun import freeze_time
-
-from app import app
-
-client = TestClient(app)
 
 
 def test_get_token(client, user):
@@ -19,7 +14,7 @@ def test_get_token(client, user):
 
 
 def test_token_expiry(client, user):
-    with freeze_time('2023-08-22 12:00:00'):
+    with freeze_time('2023-07-14 12:00:00'):
         response = client.post(
             '/token',
             data={'username': user.email, 'password': user.clean_password},
@@ -27,9 +22,9 @@ def test_token_expiry(client, user):
         assert response.status_code == 200
         token = response.json()['access_token']
 
-    with freeze_time('2023-08-22 13:00:00'):
+    with freeze_time('2023-07-14 13:00:00'):
         response = client.post(
-            '/auth/refresh_token',
+            '/refresh_token',
             headers={'Authorization': f'Bearer {token}'},
         )
         assert response.status_code == 401
@@ -50,7 +45,7 @@ def test_token_wrong_password(client, user):
         '/token', data={'username': user.email, 'password': 'wrong_password'}
     )
     assert response.status_code == 400
-    assert response.json() == {'datail': 'Incorrect email or password'}
+    assert response.json() == {'detail': 'Incorrect email or password'}
 
 
 def test_refresh_token(client, user, token):
