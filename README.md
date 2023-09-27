@@ -1,6 +1,5 @@
-# Fasty
+# To-do API : 
 
-Application spec:
 - User Authorization and Authentication
 - JWT
 - Sqlachemy and Alembic to migrations.
