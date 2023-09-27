@@ -23,3 +23,8 @@ task run
 task test
 ```
 
+## Lint & Formatter
+```shell
+task lint
+task format
+```
